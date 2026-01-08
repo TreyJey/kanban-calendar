@@ -68,7 +68,7 @@ func (tb *TelegramBot) SendDeadlineNotification(task models.Task, hoursLeft int)
             "Ссылка: http://localhost:8080/tasks/%d",
             task.Title,
             hoursLeft,
-            task.Deadline.Format("02.01.2006 15:04"),
+            task.Deadline.Local().Format("02.01.2006 15:04"),
             task.Assignee,
             task.Status,
             task.ID,

@@ -6,6 +6,7 @@ services:
     container_name: kanban-postgres
     restart: unless-stopped
     environment:
+      TZ: Asia/Yekaterinburg
       POSTGRES_DB: kanban
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -44,7 +45,7 @@ services:
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       
       # Дополнительные настройки
-      TZ: Europe/Moscow
+      TZ: Asia/Yekaterinburg
     depends_on:
       postgres:
         condition: service_healthy

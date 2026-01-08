@@ -114,12 +114,6 @@ func (r *TaskRepository) GetAllTasks(ctx context.Context) ([]models.Task, error)
 	return tasks, nil
 }
 
-func (r *TaskRepository) UpdateLastNotified(ctx context.Context, taskID int, hours int) error {
-	query := `UPDATE tasks SET last_notified_hours = $1 WHERE id = $2`
-	_, err := r.db.ExecContext(ctx, query, hours, taskID)
-	return err
-}
-
 // UpdateTask - обновляет задачу (БЕЗ TAGS)
 func (r *TaskRepository) UpdateTask(ctx context.Context, task *models.Task) error {
     query := `
@@ -434,5 +428,11 @@ func (r *TaskRepository) CreateNotification(ctx context.Context, notification *m
 func (r *TaskRepository) MarkNotificationSent(ctx context.Context, id int) error {
     query := `UPDATE notifications SET is_sent = true WHERE id = $1`
     _, err := r.db.ExecContext(ctx, query, id)
+    return err
+}
+
+func (r *TaskRepository) UpdateLastNotified(ctx context.Context, taskID int, hours int) error {
+    query := `UPDATE tasks SET last_notified_hours = $1, updated_at = NOW() WHERE id = $2`
+    _, err := r.db.ExecContext(ctx, query, hours, taskID)
     return err
 }
