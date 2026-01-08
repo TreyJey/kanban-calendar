@@ -1,0 +1,54 @@
+﻿# Игнорируемые файлы для Go проекта
+
+# Файлы окружения
+.env
+.env.local
+.env.*.local
+
+# Логи
+logs/
+*.log
+
+# Docker
+docker-compose.override.yml
+
+# Go
+vendor/
+go.sum
+
+# Бинарные файлы
+main
+kanban-calendar
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Тестовые файлы
+*.test
+*.out
+coverage.out
+
+# Идеи IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Временные файлы
+*.tmp
+*.temp
+
+# Базы данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Миграции
+# !migrations/
+# migrations/*.down.sql
+
+# Системные файлы
+.DS_Store
+Thumbs.db

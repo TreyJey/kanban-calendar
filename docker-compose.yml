@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: kanban-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kanban
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kanban-network
+
+  app:
+    build: .
+    container_name: kanban-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Конфигурация базы данных
+      DB_HOST: kanban-postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: kanban
+      
+      # Конфигурация сервера
+      SERVER_PORT: 8080
+      
+      # Telegram Bot
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      
+      # Дополнительные настройки
+      TZ: Europe/Moscow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kanban-network
+    volumes:
+      - ./migrations:/app/migrations
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:
+
+networks:
+  kanban-network:
+    driver: bridge

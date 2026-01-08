@@ -1,0 +1,14 @@
+.git
+.gitignore
+vendor/
+*.log
+.env
+Dockerfile
+docker-compose.yml
+node_modules/
+dist/
+*.db
+*.sqlite
+*.tmp
+*.test
+coverage.out
