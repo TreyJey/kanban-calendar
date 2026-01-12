@@ -35,6 +35,7 @@ func SetupRoutes(r *gin.Engine, repo *repository.TaskRepository) {
             tasks.PUT("/:id", UpdateTask(repo))             // PUT /api/tasks/:id
             tasks.DELETE("/:id", DeleteTask(repo))          // DELETE /api/tasks/:id
             tasks.GET("/status/:status", GetTasksByStatus(repo)) // GET /api/tasks/status/:status
+            tasks.POST("/import", ImportCalendar(repo))
         }
         
         // Календарь

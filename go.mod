@@ -3,6 +3,7 @@ module kanban-calendar
 go 1.25
 
 require (
+	github.com/arran4/golang-ical v0.3.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/lib/pq v1.10.9

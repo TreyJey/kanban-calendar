@@ -20,22 +20,22 @@ func NewTaskRepository(db *sql.DB) *TaskRepository {
 
 func (r *TaskRepository) CreateTask(ctx context.Context, task *models.Task) error {
     query := `
-        INSERT INTO tasks 
-        (title, description, status, priority, deadline, start_date, end_date, assignee, last_notified_hours)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 100)
-        RETURNING id, created_at, updated_at, last_notified_hours
-    `
+        INSERT INTO tasks (title, description, status, priority, deadline, start_date, end_date, assignee, external_uid, last_notified_hours)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id, created_at, updated_at`
     
     return r.db.QueryRowContext(ctx, query,
-        task.Title,
-        task.Description,
-        task.Status,
-        task.Priority,
-        task.Deadline,
-        task.StartDate,
-        task.EndDate,
-        task.Assignee,
-    ).Scan(&task.ID, &task.CreatedAt, &task.UpdatedAt, &task.LastNotifiedHours)
+        task.Title, 
+        task.Description, 
+        task.Status, 
+        task.Priority, 
+        task.Deadline, 
+        task.StartDate, 
+        task.EndDate, 
+        task.Assignee, 
+        task.ExternalUID,
+        task.LastNotifiedHours,
+    ).Scan(&task.ID, &task.CreatedAt, &task.UpdatedAt)
 }
 
 // GetTaskByID - получает задачу по ID (БЕЗ TAGS)

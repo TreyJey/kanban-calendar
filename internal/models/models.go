@@ -17,6 +17,7 @@ const (
 // Task - основная структура задачи
 type Task struct {
     ID          int         `json:"id"`                    // ID задачи
+    ExternalUID string      `json:"external_uid,omitempty"` // UID позволит нам сопоставлять задачи из внешних календарей
     Title       string      `json:"title"`                 // Заголовок
     Description string      `json:"description,omitempty"` // Описание (может быть пустым)
     Status      TaskStatus  `json:"status"`                // Статус из констант выше
