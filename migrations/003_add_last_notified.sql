@@ -1,1 +1,1 @@
-ALTER TABLE tasks ADD COLUMN last_notified_hours INTEGER DEFAULT 100;
+ALTER TABLE tasks ADD COLUMN last_notified_hours INTEGER DEFAULT 999;

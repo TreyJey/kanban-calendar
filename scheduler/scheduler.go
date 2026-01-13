@@ -10,7 +10,7 @@ import (
 
 type Scheduler struct {
 	repo     *repository.TaskRepository
-	telegram *telegram.TelegramBot // Исправлено: TelegramBot вместо Bot
+	telegram *telegram.TelegramBot
 }
 
 func NewScheduler(repo *repository.TaskRepository, tg *telegram.TelegramBot) *Scheduler {
@@ -30,44 +30,56 @@ func (s *Scheduler) Start() {
 }
 
 func (s *Scheduler) CheckDeadlines() {
-	// ВНИМАНИЕ: Если здесь будет ошибка "undefined: s.repo.GetTasks",
-	// проверь postgres.go и замени GetTasks на GetAllTasks (или как он там называется)
 	tasks, err := s.repo.GetAllTasks(context.Background())
 	if err != nil {
-		log.Printf("❌ Ошибка получения задач: %v", err)
+		log.Printf("Ошибка получения задач: %v", err)
 		return
 	}
 
-	// Пороги уведомлений: 48ч, 24ч, 12ч, 6ч, 3ч, 0ч
-	thresholds := []int{0, 3, 6, 12, 24, 48}
+	// Идем ОТ БОЛЬШЕГО К МЕНЬШЕМУ
+	thresholds := []int{48, 24, 12, 6, 3, 0}
+	
+	loc := time.FixedZone("UTC+5", 5*60*60)
+	now := time.Now().In(loc)
 
 	for _, task := range tasks {
-		// Пропускаем выполненные задачи и задачи без дедлайна
 		if task.Status == "done" || task.Deadline == nil || task.Deadline.IsZero() {
 			continue
 		}
 
-		hoursLeft := time.Until(*task.Deadline).Hours()
+		deadline := task.Deadline.In(loc)
+		timeLeft := deadline.Sub(now)
+		hoursLeft := timeLeft.Hours()
 
-		for _, t := range thresholds {
-			// Логика: если осталось меньше порога T и мы еще не уведомляли об этом пороге
-			if hoursLeft <= float64(t) && task.LastNotifiedHours > t {
-				
+		// Если задача просрочена более чем на 1 час, перестаем спамить
+		if hoursLeft < -1.0 {
+			continue
+		}
+
+		for i, t := range thresholds {
+			isCurrentThreshold := hoursLeft <= float64(t)
+			if i+1 < len(thresholds) {
+				if hoursLeft <= float64(thresholds[i+1]) {
+					continue
+				}
+			}
+
+			// Если мы в этом пороге И мы о нем еще не уведомляли
+			if isCurrentThreshold && task.LastNotifiedHours > t {
 				err := s.telegram.SendDeadlineNotification(task, int(hoursLeft))
 				if err != nil {
-					log.Printf("❌ Ошибка отправки в TG: %v", err)
+					log.Printf("Ошибка отправки в TG: %v", err)
 					break 
 				}
 
-				// Обновляем состояние в базе, чтобы не было дублей
+				// Фиксируем в базе
 				err = s.repo.UpdateLastNotified(context.Background(), task.ID, t)
 				if err != nil {
-					log.Printf("❌ Ошибка обновления порога в БД: %v", err)
-				} else {
-					log.Printf("✅ Уведомление отправлено для '%s' (порог %d ч.)", task.Title, t)
+					log.Printf("Ошибка обновления порога в БД: %v", err)
 				}
 				
-				break // Выходим из цикла порогов для этой задачи
+				// ПРЕРЫВАЕМ цикл порогов
+				break 
 			}
 		}
 	}

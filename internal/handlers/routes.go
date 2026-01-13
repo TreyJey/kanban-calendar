@@ -29,13 +29,16 @@ func SetupRoutes(r *gin.Engine, repo *repository.TaskRepository) {
         // Задачи
         tasks := api.Group("/tasks")
         {
-            tasks.GET("", GetTasks(repo))                    // GET /api/tasks
-            tasks.GET("/:id", GetTaskByID(repo))            // GET /api/tasks/:id
-            tasks.POST("", CreateTask(repo))                // POST /api/tasks
-            tasks.PUT("/:id", UpdateTask(repo))             // PUT /api/tasks/:id
-            tasks.DELETE("/:id", DeleteTask(repo))          // DELETE /api/tasks/:id
-            tasks.GET("/status/:status", GetTasksByStatus(repo)) // GET /api/tasks/status/:status
+            tasks.GET("", GetTasks(repo))
+            tasks.POST("", CreateTask(repo))
             tasks.POST("/import", ImportCalendar(repo))
+            tasks.GET("/import", func(c *gin.Context) {
+                c.JSON(405, gin.H{"error": "Используйте POST запрос для импорта файла"})
+            })
+            tasks.GET("/status/:status", GetTasksByStatus(repo))
+            tasks.GET("/:id", GetTaskByID(repo))
+            tasks.PUT("/:id", UpdateTask(repo))
+            tasks.DELETE("/:id", DeleteTask(repo))
         }
         
         // Календарь

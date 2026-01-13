@@ -3,6 +3,7 @@ package telegram
 import (
     "fmt"
     "log"
+    "strings"
     "time"
     "kanban-calendar/internal/models"
     tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -11,11 +12,16 @@ import (
 type TelegramBot struct {
     bot    *tgbotapi.BotAPI
     ChatID string
+    FrontendURL string
 }
 
-func NewTelegramBot(token, chatID string) (*TelegramBot, error) {
+func NewTelegramBot(token, chatID, frontendURL string) (*TelegramBot, error) {
     if token == "" {
         return nil, fmt.Errorf("токен Telegram не указан")
+    }
+
+    if frontendURL == "" {
+        frontendURL = "http://localhost:3000"
     }
     
     bot, err := tgbotapi.NewBotAPI(token)
@@ -29,6 +35,7 @@ func NewTelegramBot(token, chatID string) (*TelegramBot, error) {
     return &TelegramBot{
         bot:    bot,
         ChatID: chatID,
+        FrontendURL: frontendURL,
     }, nil
 }
 
@@ -42,55 +49,55 @@ func (tb *TelegramBot) SendDeadlineNotification(task models.Task, hoursLeft int)
         hours := int(overdue.Hours())
         
         message = fmt.Sprintf(
-            "🚨 *ПРОСРОЧЕНА!* 🚨\n" +
-            "*Задача:* %s\n" +
-            "*Просрочено:* %d час(ов) назад\n" +
-            "*Исполнитель:* %s\n" +
-            "*Статус:* %s\n" +
-            "*Приоритет:* %s\n\n" +
-            "Ссылка: http://localhost:8080/tasks/%d",
+            "🚨 *ПРОСРОЧЕНА!* 🚨\n"+
+            "*Задача:* %s\n"+
+            "*Просрочено:* %d час(ов) назад\n"+
+            "*Исполнитель:* %s\n"+
+            "*Статус:* %s\n"+
+            "*Приоритет:* %s",
             task.Title,
             hours,
             task.Assignee,
             task.Status,
             task.Priority,
-            task.ID,
         )
     } else if hoursLeft <= 24 {
         // Дедлайн в течение 24 часов
         message = fmt.Sprintf(
-            "⏰ *Скоро дедлайн!*\n" +
-            "*Задача:* %s\n" +
-            "*Осталось:* %d час(ов)\n" +
-            "*Дедлайн:* %s\n" +
-            "*Исполнитель:* %s\n" +
-            "*Статус:* %s\n\n" +
-            "Ссылка: http://localhost:8080/tasks/%d",
+            "⏰ *Скоро дедлайн!*\n"+
+            "*Задача:* %s\n"+
+            "*Осталось:* %d час(ов)\n"+
+            "*Дедлайн:* %s\n"+
+            "*Исполнитель:* %s\n"+
+            "*Статус:* %s",
             task.Title,
             hoursLeft,
             task.Deadline.Local().Format("02.01.2006 15:04"),
             task.Assignee,
             task.Status,
-            task.ID,
         )
     } else {
         // Дедлайн через несколько дней
         daysLeft := hoursLeft / 24
         message = fmt.Sprintf(
-            "📅 *Напоминание о дедлайне*\n" +
-            "*Задача:* %s\n" +
-            "*Осталось:* %d дней\n" +
-            "*Дедлайн:* %s\n" +
-            "*Исполнитель:* %s\n\n" +
-            "Ссылка: http://localhost:8080/tasks/%d",
+            "📅 *Напоминание о дедлайне*\n"+
+            "*Задача:* %s\n"+
+            "*Осталось:* %d дней\n"+
+            "*Дедлайн:* %s\n"+
+            "*Исполнитель:* %s",
             task.Title,
             daysLeft,
             task.Deadline.Format("02.01.2006"),
             task.Assignee,
-            task.ID,
         )
     }
     
+    // Добавляем ссылку в конец
+    cleanBaseURL := strings.TrimSpace(tb.FrontendURL)
+    link := fmt.Sprintf("\n\nСсылка на задачу: %s/tasks/%d", cleanBaseURL, task.ID)
+    
+    // Добавляем ссылку к сформированному выше тексту
+    message += link
     msg := tgbotapi.NewMessageToChannel(tb.ChatID, message)
     msg.ParseMode = "Markdown"
     
@@ -101,18 +108,18 @@ func (tb *TelegramBot) SendDeadlineNotification(task models.Task, hoursLeft int)
 // SendStatusChangeNotification - отправляет уведомление об изменении статуса
 func (tb *TelegramBot) SendStatusChangeNotification(task models.Task, oldStatus models.TaskStatus) error {
     message := fmt.Sprintf(
-        "🔄 *Статус изменен*\n" +
-        "*Задача:* %s\n" +
-        "*Старый статус:* %s\n" +
-        "*Новый статус:* %s\n" +
-        "*Исполнитель:* %s\n\n" +
-        "Ссылка: http://localhost:8080/tasks/%d",
+        "🔄 *Статус изменен*\n"+
+        "*Задача:* %s\n"+
+        "*Старый статус:* %s\n"+
+        "*Новый статус:* %s\n"+
+        "*Исполнитель:* %s",
         task.Title,
         oldStatus,
         task.Status,
         task.Assignee,
-        task.ID,
     )
+    
+    message += fmt.Sprintf("\n\n[Открыть задачу](%s/tasks/%d)", tb.FrontendURL, task.ID)
     
     msg := tgbotapi.NewMessageToChannel(tb.ChatID, message)
     msg.ParseMode = "Markdown"

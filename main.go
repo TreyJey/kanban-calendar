@@ -2,6 +2,7 @@ package main
 
 import (
     "log"
+    "os"
     "kanban-calendar/internal/config"
     "kanban-calendar/internal/database"
     "kanban-calendar/internal/handlers"
@@ -37,6 +38,9 @@ func main() {
     if err := database.Migrate(db); err != nil {
         log.Printf("Предупреждение миграций: %v", err)
     }
+
+    _, _ = db.Exec(`ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_external_uid_key;`)
+    _, _ = db.Exec(`DROP INDEX IF EXISTS tasks_external_uid_key;`)
     
     // Создаем репозиторий
     repo := repository.NewTaskRepository(db)
@@ -44,7 +48,13 @@ func main() {
     // Инициализируем Telegram бота (если токен указан)
     var telegramBot *telegram.TelegramBot
     if cfg.TelegramToken != "" && cfg.TelegramChatID != "" {
-        telegramBot, err = telegram.NewTelegramBot(cfg.TelegramToken, cfg.TelegramChatID)
+        // Получаем URL фронтенда из окружения (или ставим дефолт)
+        frontendURL := os.Getenv("FRONTEND_URL")
+        if frontendURL == "" {
+            frontendURL = "http://localhost:3000" // Дефолт для разработки
+        }
+
+        telegramBot, err = telegram.NewTelegramBot(cfg.TelegramToken, cfg.TelegramChatID, frontendURL)
         if err != nil {
             log.Printf("Telegram бот не запущен: %v", err)
         } else {
@@ -55,8 +65,6 @@ func main() {
             sched.Start()
             log.Println("Планировщик уведомлений запущен")
         }
-    } else {
-        log.Println("Telegram бот отключен (не указан токен или chat_id)")
     }
     
     // Настраиваем Gin

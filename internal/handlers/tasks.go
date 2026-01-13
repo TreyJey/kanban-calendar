@@ -1,6 +1,7 @@
 package handlers
 
 import (
+    "fmt"
     "github.com/arran4/golang-ical"
     "net/http"
     "strconv"
@@ -59,79 +60,47 @@ func GetTaskByID(repo *repository.TaskRepository) gin.HandlerFunc {
 
 // CreateTask - создает новую задачу
 func CreateTask(repo *repository.TaskRepository) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        var req models.CreateTaskRequest
-        if err := c.ShouldBindJSON(&req); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{
-                "error":   "Неверный формат данных",
-                "details": err.Error(),
-            })
-            return
-        }
-        
-        // Создаем задачу из запроса
-        task := &models.Task{
-            Title:       req.Title,
-            Description: req.Description,
-            Status:      req.Status,
-            Priority:    req.Priority,
-            Assignee:    req.Assignee,
-            Tags:        req.Tags,
-        }
-        
-        // Парсим даты если они переданы
-        parseTime := func(timeStr string) (*time.Time, error) {
-            if timeStr == "" {
-                return nil, nil
-            }
-            t, err := time.Parse(time.RFC3339, timeStr)
-            if err != nil {
-                return nil, err
-            }
-            return &t, nil
-        }
-        
-        if deadline, err := parseTime(req.Deadline); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{
-                "error":   "Неверный формат даты дедлайна",
-                "details": err.Error(),
-            })
-            return
-        } else {
-            task.Deadline = deadline
-        }
-        
-        if startDate, err := parseTime(req.StartDate); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{
-                "error":   "Неверный формат даты начала",
-                "details": err.Error(),
-            })
-            return
-        } else {
-            task.StartDate = startDate
-        }
-        
-        if endDate, err := parseTime(req.EndDate); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{
-                "error":   "Неверный формат даты окончания",
-                "details": err.Error(),
-            })
-            return
-        } else {
-            task.EndDate = endDate
-        }
-        
-        // Создаем задачу в БД
-        if err := repo.CreateTask(c.Request.Context(), task); err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error":   "Ошибка создания задачи",
-                "details": err.Error(),
-            })
-            return
-        }
-        
-        c.JSON(http.StatusCreated, task)
-    }
+	return func(c *gin.Context) {
+		var req models.CreateTaskRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат данных"})
+			return
+		}
+
+		// Функция для перевода локальных цифр в UTC для базы
+		parseToUTC := func(s string) *time.Time {
+			if s == "" { return nil }
+			var y, m, d, h, min, sec int
+			_, err := fmt.Sscanf(s, "%d-%d-%dT%d:%d:%d", &y, &m, &d, &h, &min, &sec)
+			if err != nil { return nil }
+			
+			// Создаем время в поясе +5
+			loc := time.FixedZone("UTC+5", 5*60*60)
+			localTime := time.Date(y, time.Month(m), d, h, min, sec, 0, loc)
+			
+			// ПРЕОБРАЗУЕМ В UTC
+			utcTime := localTime.UTC()
+			return &utcTime
+		}
+
+		task := &models.Task{
+			Title:             req.Title,
+			Description:       req.Description,
+			Status:            req.Status,
+			Priority:          req.Priority,
+			Assignee:          req.Assignee,
+			Deadline:          parseToUTC(req.Deadline),
+			StartDate:         parseToUTC(req.StartDate),
+			EndDate:           parseToUTC(req.EndDate),
+			LastNotifiedHours: 999,
+		}
+
+		if err := repo.CreateTask(c.Request.Context(), task); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, task)
+	}
 }
 
 // UpdateTask - обновляет задачу
