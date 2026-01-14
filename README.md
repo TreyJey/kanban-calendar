@@ -1,7 +1,8 @@
-Kanban Calendar API Integration
+## Kanban Calendar API Integration
+
 Backend-сервис для управления задачами канбан-доски с поддержкой импорта из внешних календарей и системой уведомлений через Telegram.
 
---- Стек технологий
+## Стек технологий
 
 Language: Go (Golang)
 
@@ -13,7 +14,7 @@ Standard: iCalendar (RFC 5545)
 
 Notifications: Telegram Bot API
 
---- Telegram Бот
+## Telegram Бот
 
 Сервис включает в себя планировщик уведомлений (Notification Scheduler), который отслеживает дедлайны задач.
 
@@ -30,7 +31,7 @@ Notifications: Telegram Bot API
 
  - TELEGRAM_CHAT_ID — ID чата (личного или группового), куда бот будет слать алерты.
 
---- Быстрый запуск
+## Быстрый запуск
 
 Клонируйте репозиторий:
 
@@ -51,7 +52,7 @@ FRONTEND_URL=http://localhost:3000
 docker-compose up --build
 Сервер будет доступен по адресу: http://localhost:8080
 
---- API Documentation
+## API Documentation
 
 ## API Endpoints
 
@@ -80,7 +81,7 @@ DELETE	/api/tasks/:id			Удалить задачу					—
   "assignee": "Frontend Dev"
 }
 
---- Структура БД
+## Структура БД
 
 Система автоматически создает и управляет двумя таблицами:
 
