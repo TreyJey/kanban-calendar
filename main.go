@@ -63,6 +63,7 @@ func main() {
             // Запускаем планировщик уведомлений
             sched := scheduler.NewScheduler(repo, telegramBot)
             sched.Start()
+            telegramBot.SendTestMessage()
             log.Println("Планировщик уведомлений запущен")
         }
     }
