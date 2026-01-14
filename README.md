@@ -56,16 +56,16 @@ docker-compose up --build
 
 ## API Endpoints
 
-Метод	Путь	               		Описание				Тело запроса (Request Body)
-GET	/api/tasks			Получить все задачи				—
-GET	/api/tasks/:id			Получить задачу по ID				—
-GET	/api/tasks/status/:status	Получить задачи по статусу			—
-GET	/api/calendar/events		Задачи в формате событий			—
-GET	/api/health			Проверка здоровья сервиса			—
-POST	/api/tasks			Создать новую задачу			См. структуру ниже
-POST	/api/tasks/import		Импорт календаря			multipart/form-data (key: calendar)
-PUT	/api/tasks/:id			Обновить задачу				См. структуру ниже
-DELETE	/api/tasks/:id			Удалить задачу					—
+Метод,Путь,Описание,Тело запроса (Request Body)
+GET,/api/tasks,Получить все задачи,—
+GET,/api/tasks/:id,Получить задачу по ID,—
+GET,/api/tasks/status/:status,Получить задачи по статусу,—
+GET,/api/calendar/events,Задачи в формате событий календаря,—
+GET,/api/health,Проверка состояния сервиса,—
+POST,/api/tasks,Создать новую задачу,JSON (см. структуру ниже)
+POST,/api/tasks/import,Импорт календаря (.ics),multipart/form-data (key: calendar)
+PUT,/api/tasks/:id,Обновить существующую задачу,JSON (см. структуру ниже)
+DELETE,/api/tasks/:id,Удалить задачу,—
 
 
 
